@@ -66,57 +66,47 @@ def get_weapon_names(driver):
 
 def get_weapons_physical_damage(driver):
     driver.get(WEAPONS_CATEGORIES_URL)
-    sleep(4)
     physical_damage = []
     weapon_urls = []
     div_elements = driver.find_elements(By.CLASS_NAME, "lightbox-caption")
     for div_element in div_elements:
-        a_tag = div_element.find_element(By.TAG_NAME, 'a')
-        a_tag_html = a_tag.get_attribute("outerHTML")
-        pattern = r'>(.*?)<\/a>'
-        matches = re.findall(pattern, a_tag_html)
-        text_content = matches[0] if matches else None
-        formatted_string = text_content.replace(" ", "_")
-        weapon_url = str(BASE_WEAPON_PATH) + str(formatted_string)
-        weapon_urls.append(weapon_url)
+        a_tag_html = div_element.find_element(By.TAG_NAME, 'a').get_attribute("outerHTML")
+        text_content = re.search(r'>(.*?)<\/a>', a_tag_html).group(1).replace(" ", "_")
+        weapon_urls.append(BASE_WEAPON_PATH + text_content)
         
     for url in weapon_urls:
-        driver.get(url)
         try:
-            driver.find_element(By.CSS_SELECTOR, '.mw-parser-output > ul:nth-child(3) > li:nth-child(1) > ul:nth-child(2) > li:nth-child(1) > a:nth-child(1)')
-            url = str(url) + "_(Dark_Souls)"
             driver.get(url)
-        except:
-            try:
-                driver.find_element(By.CSS_SELECTOR, '.mw-parser-output > ul:nth-child(3) > li:nth-child(1) > a:nth-child(1)')
-                url = str(url) + "_(Dark_Souls)"
-                driver.get(url)
-            except:
-                print("Element not found on the page.")
-            print("Element not found on the page.")
+            css_selectors = ['.mw-parser-output > ul:nth-child(3) > li:nth-child(1) > ul:nth-child(2) > li:nth-child(1) > a:nth-child(1)',
+                             '.mw-parser-output > ul:nth-child(3) > li:nth-child(1) > a:nth-child(1)']
+            for css_selector in css_selectors:
+                try:
+                    driver.find_element(By.CSS_SELECTOR, css_selector)
+                    url += "_(Dark_Souls)"
+                    driver.get(url)
+                    break
+                except:
+                    continue
 
-        try:  
             damage_element = driver.find_element(By.CSS_SELECTOR, 'td.pi-horizontal-group-item.pi-data-value.pi-font.pi-border-color.pi-item-spacing[data-source="atk-physical"]')
             damage = damage_element.text
-            physical_damage.append(damage if damage else "-")
             print(url + " -> " + damage)
+            physical_damage.append(damage if damage else "-")
         except:
+            print("Element not found on the page.")
             physical_damage.append("-")
-            print(url + "->" + "-")
-    
+
     for damage in physical_damage:
         print(damage)
         
   
 def ds1_scrape():
-    options = Options()
-    options.add_argument("-headless")
     driver = webdriver.Firefox(
         service=FirefoxService(GeckoDriverManager().install())
     )
-    get_weapon_categories(driver)
-    get_weapon_images(driver)
-    get_weapon_names(driver)
+    #get_weapon_categories(driver)
+    #get_weapon_images(driver)
+    #get_weapon_names(driver)
     get_weapons_physical_damage(driver)
     driver.quit()
 
