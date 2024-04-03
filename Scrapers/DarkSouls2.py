@@ -20,7 +20,7 @@ WEAPON_URLS = []
 
 def get_weapon_urls_from_wiki(driver):
     driver.get(WEAPONS_CATEGORIES_URL)  
-    sleep(3)
+    sleep(2)
     driver.find_element(By.CSS_SELECTOR, "._2O--J403t2VqCuF8XJAZLK").click() 
     table1 = driver.find_element(By.XPATH, "/html/body/div[4]/div[4]/div[3]/main/div[3]/div/div/table[1]/tbody/tr")
     li_elements1 = table1.find_elements(By.TAG_NAME, "li")
@@ -40,6 +40,32 @@ def get_weapon_urls_from_wiki(driver):
             url_suffix = url_suffix.replace("%27", "'")
         WEAPON_URLS.append(url_suffix)
     
+    return WEAPON_URLS
+
+def get_staff_urls_from_wiki(driver):
+    driver.get(WEAPONS_CATEGORIES_URL)
+    sleep(2)
+    staves = driver.find_element(By.XPATH, "/html/body/div[4]/div[4]/div[3]/main/div[3]/div/div/table[2]/tbody/tr/td[1]")
+    staves_li = staves.find_elements(By.TAG_NAME, "li")
+    for staff in staves_li:
+        a_tag = staff.find_element(By.TAG_NAME, "a")
+        url_suffix = a_tag.get_attribute("href") 
+        if "%27" in url_suffix:
+            url_suffix = url_suffix.replace("%27", "'")
+        WEAPON_URLS.append(url_suffix)
+    return WEAPON_URLS
+
+def get_chimes_urls_from_wiki(driver):
+    driver.get(WEAPONS_CATEGORIES_URL)
+    sleep(2)
+    chimes = driver.find_element(By.XPATH, "/html/body/div[4]/div[4]/div[3]/main/div[3]/div/div/table[2]/tbody/tr/td[2]")
+    chimes_li = chimes.find_elements(By.TAG_NAME, "li")
+    for chime in chimes_li:
+        a_tag = chime.find_element(By.TAG_NAME, "a")
+        url_suffix = a_tag.get_attribute("href") 
+        if "%27" in url_suffix:
+            url_suffix = url_suffix.replace("%27", "'")
+        WEAPON_URLS.append(url_suffix)
     return WEAPON_URLS
 
 def get_weapon_categories(driver):
@@ -78,13 +104,64 @@ def get_weapon_images(driver):
         row += 1
     wb.save(EXCEL_PATH)
     print("done")
+
+def get_weapon_damages(driver):
+    get_weapon_urls_from_wiki(driver)
+    wb = load_workbook(EXCEL_PATH)
+    ws = wb["Armas"]
+    row = 149
+    for weapon_url in WEAPON_URLS:
+        driver.get(weapon_url)
+        physical_damage = driver.find_element(By.CSS_SELECTOR, "section.pi-item:nth-child(5) > table:nth-child(1) > tbody:nth-child(2) > tr:nth-child(1) > td:nth-child(1)")
+        match = re.search(r'<td[^>]*>(.*?)</td>', physical_damage.get_attribute("outerHTML"))
+        if match: 
+            damage = match.group(1)
+            ws.cell(row=row, column=3).value = damage
+            row += 1
+    wb.save(EXCEL_PATH)
+    print("done") 
     
+def get_staff_damage(driver):
+    get_staff_urls_from_wiki(driver)
+    wb = load_workbook(EXCEL_PATH)
+    ws = wb["Armas"]
+    row = 371
+    for staff_url in WEAPON_URLS:
+        driver.get(staff_url)
+        magical_damage = driver.find_element(By.CSS_SELECTOR, "section.pi-item:nth-child(5) > table:nth-child(1) > tbody:nth-child(2) > tr:nth-child(1) > td:nth-child(2)")
+        match = re.search(r'<td[^>]*>(.*?)</td>', magical_damage.get_attribute("outerHTML"))
+        if match: 
+            damage = match.group(1)
+            ws.cell(row=row, column=3).value = damage
+            row += 1
+    wb.save(EXCEL_PATH)
+    print("done") 
+    
+def get_chime_damage(driver):
+    get_chimes_urls_from_wiki(driver)
+    wb = load_workbook(EXCEL_PATH)
+    ws = wb["Armas"]
+    row = 385
+    for chime_url in WEAPON_URLS:
+        driver.get(chime_url)
+        dark_damage = driver.find_element(By.CSS_SELECTOR, "section.pi-item:nth-child(5) > table:nth-child(1) > tbody:nth-child(2) > tr:nth-child(1) > td:nth-child(5)")
+        match = re.search(r'<td[^>]*>(.*?)</td>', dark_damage.get_attribute("outerHTML"))
+        if match: 
+            damage = match.group(1)
+            ws.cell(row=row, column=3).value = damage
+            row += 1
+    wb.save(EXCEL_PATH)
+    print("done") 
+
 def ds2_scrape():
     driver = webdriver.Firefox(
         service=FirefoxService(GeckoDriverManager().install())
     )
     #get_weapon_categories(driver)
     #get_weapon_names(driver)
-    get_weapon_images(driver)
+    #get_weapon_images(driver)
     #get_weapon_urls_from_wiki(driver)
+    #get_weapon_damages(driver)
+    #get_staff_damage(driver)
+    get_chime_damage(driver)
     driver.quit()
